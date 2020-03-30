@@ -36,9 +36,9 @@ class Object;
 struct date
 {
 	date() : year(1), month(1), day(1) {};
-	date(const string _init);
+	date(const string _init, bool check);
 	date(const date& _init);
-	date(const Object* _init);
+	date(const Object* _init, bool check);
 
 	date& operator=(const date& _rhs);
 	bool operator==(const date& _rhs) const;

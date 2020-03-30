@@ -25,7 +25,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 
 
 
-date::date(const string _init)
+date::date(const string _init, bool check)
 {
 	if (_init.length() < 1)
 	{
@@ -46,6 +46,13 @@ date::date(const string _init)
 	year				= atoi( subStr.substr(0, first_dot).c_str() );
 	month				= atoi( subStr.substr(first_dot + 1, last_dot - first_dot).c_str() );
 	day				= atoi( subStr.substr(last_dot + 1, 2).c_str() );
+
+	// added!
+	if (check && year >= 1836) {
+		year = 1836;
+		month = 1;
+		day = 1;
+	}
 }
 
 
@@ -66,7 +73,7 @@ date& date::operator=(const date& _rhs)
 }
 
 
-date::date(const Object* _init)
+date::date(const Object* _init, bool check)
 {
 	vector<Object*> dateSubObj = _init->getValue("year");
 	if (dateSubObj.size() > 0)
@@ -80,7 +87,13 @@ date::date(const Object* _init)
 	{
 		// date specified by year.month.day
 		// build another date object via date(string&) and copy it to this one
-		(*this) = date(_init->getLeaf());
+		(*this) = date(_init->getLeaf(), check);
+	}
+	// added!
+	if (check && year >= 1836) {
+		year = 1836;
+		month = 1;
+		day = 1;
 	}
 }
 

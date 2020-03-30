@@ -53,7 +53,7 @@ EU3Agreement::EU3Agreement(Object *obj)
 	std::vector<Object*> objDate = obj->getValue("start_date");
 	if (objDate.size() > 0)
 	{
-		startDate = date(objDate[0]->getLeaf());
+		startDate = date(objDate[0]->getLeaf(), true);
 	}
 }
 

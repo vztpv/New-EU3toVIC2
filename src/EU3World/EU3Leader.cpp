@@ -95,7 +95,7 @@ EU3Leader::EU3Leader(Object *obj)
 	subObj = obj->getValue("activation");
 	if (subObj.size() > 0)
 	{
-		activationDate = date(subObj[0]->getLeaf());
+		activationDate = date(subObj[0]->getLeaf(), true);
 	}
 	else
 	{

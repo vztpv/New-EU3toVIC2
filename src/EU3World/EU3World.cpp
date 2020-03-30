@@ -46,7 +46,7 @@ EU3World::EU3World(Object* obj)
 	vector<Object*> dateObj = obj->getValue("date");
 	if (dateObj.size() > 0)
 	{
-		date endDate(dateObj[0]->getLeaf());
+		date endDate(dateObj[0]->getLeaf(), true);
 	}
 
 	provinces.clear();

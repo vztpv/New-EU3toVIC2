@@ -124,7 +124,7 @@ EU3Province::EU3Province(Object* obj)
 			vector<Object*> ownerObj = historyObjs[i]->getValue("owner");
 			if (ownerObj.size() > 0)
 			{
-				date newDate(historyObjs[i]->getKey());
+				date newDate(historyObjs[i]->getKey(), true);
 				thisCountry = ownerObj[0]->getLeaf();
 
 				map<string, date>::iterator itr = lastPossessedDate.find(lastOwner);
@@ -139,13 +139,13 @@ EU3Province::EU3Province(Object* obj)
 			vector<Object*> culObj = historyObjs[i]->getValue("culture");
 			if (culObj.size() > 0)
 			{
-				date newDate(historyObjs[i]->getKey());
+				date newDate(historyObjs[i]->getKey(), true);
 				cultureHistory.push_back(make_pair(newDate, culObj[0]->getLeaf()));
 			}
 			vector<Object*> religObj = historyObjs[i]->getValue("religion");
 			if (religObj.size() > 0)
 			{
-				date newDate(historyObjs[i]->getKey());
+				date newDate(historyObjs[i]->getKey(), true);
 				religionHistory.push_back(make_pair(newDate, religObj[0]->getLeaf()));
 			}
 		}
@@ -388,9 +388,9 @@ void EU3Province::checkBuilding(const Object* provinceObj, string building)
 void EU3Province::buildPopRatios()
 {
 	date endDate = Configuration::getLastEU3Date();
-	if (endDate < date("1821.1.1"))
+	if (endDate < date("1821.1.1", false))
 	{
-		endDate = date("1821.1.1");
+		endDate = date("1821.1.1", false);
 	}
 	date cutoffDate	 = endDate;
 	cutoffDate.year	-= 200;
@@ -431,7 +431,7 @@ void EU3Province::buildPopRatios()
 	{
 		if (cItr == cultureHistory.end())
 		{
-			cDate = date("2000.1.1");
+			cDate = date("2000.1.1", false);
 		}
 		else
 		{
@@ -439,7 +439,7 @@ void EU3Province::buildPopRatios()
 		}
 		if (rItr == religionHistory.end())
 		{
-			rDate = date("2000.1.1");
+			rDate = date("2000.1.1", false);
 		}
 		else
 		{

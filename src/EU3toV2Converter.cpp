@@ -43,7 +43,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 // Returns 0 on success or a non-zero failure code on error.
 int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 {
-	Object*	obj;				// generic object
+	Object* obj;				// generic object
 	ifstream	read;				// ifstream for reading files
 
 	wchar_t curDir[MAX_PATH];
@@ -56,6 +56,7 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 	LOG(LogLevel::Info) << "Get V2 Install Path";
 	string V2Loc = Configuration::getV2Path();
 	struct _stat st;
+
 	if (V2Loc.empty() || (_stat(V2Loc.c_str(), &st) != 0))
 	{
 		LOG(LogLevel::Error) << "No Victoria 2 path was specified in configuration.txt, or the path was invalid";
@@ -111,10 +112,10 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 	}
 
 	//get output name
-	const int slash	= EU3SaveFileName.find_last_of("\\");				// the last slash in the save's filename
-	string outputName	= EU3SaveFileName.substr(slash + 1, EU3SaveFileName.length());
-	const int length	= outputName.find_first_of(".");						// the first period after the slash
-	outputName			= outputName.substr(0, length);						// the name to use to output the mod
+	const int slash = EU3SaveFileName.find_last_of("\\");				// the last slash in the save's filename
+	string outputName = EU3SaveFileName.substr(slash + 1, EU3SaveFileName.length());
+	const int length = outputName.find_first_of(".");						// the first period after the slash
+	outputName = outputName.substr(0, length);						// the name to use to output the mod
 	int dash = outputName.find_first_of('-');
 	while (dash != string::npos)
 	{
@@ -171,21 +172,21 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 	WorldType game = sourceWorld.getWorldType();
 	switch (game)
 	{
-		case VeryOld:
-			LOG(LogLevel::Error) << "EU3 game appears to be from an old version; only IN, HttT, and DW are supported.";
-			exit(1);
-		case InNomine:
-			LOG(LogLevel::Info) << "Game type is: EU3 In Nomine.  EXPERIMENTAL.";
-			break;
-		case HeirToTheThrone:
-			LOG(LogLevel::Info) << "Game type is: EU3 Heir to the Throne.";
-			break;
-		case DivineWind:
-			LOG(LogLevel::Info) << "Game type is: EU3 Divine Wind.";
-			break;
-		default:
-			LOG(LogLevel::Error) << "Error: Could not determine savegame type.";
-			exit(1);
+	case VeryOld:
+		LOG(LogLevel::Error) << "EU3 game appears to be from an old version; only IN, HttT, and DW are supported.";
+		exit(1);
+	case InNomine:
+		LOG(LogLevel::Info) << "Game type is: EU3 In Nomine.  EXPERIMENTAL.";
+		break;
+	case HeirToTheThrone:
+		LOG(LogLevel::Info) << "Game type is: EU3 Heir to the Throne.";
+		break;
+	case DivineWind:
+		LOG(LogLevel::Info) << "Game type is: EU3 Divine Wind.";
+		break;
+	default:
+		LOG(LogLevel::Error) << "Error: Could not determine savegame type.";
+		exit(1);
 	}
 
 	sourceWorld.setLocalisations(localisation);
@@ -215,21 +216,21 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 		LOG(LogLevel::Info) << "Reading unit strengths from EU3 installation folder";
 		struct _finddata_t unitFileData;
 		intptr_t fileListing;
-		if ( (fileListing = _findfirst( (EU3Loc + "\\common\\units\\*.txt").c_str(), &unitFileData)) == -1L)
+		if ((fileListing = _findfirst((EU3Loc + "\\common\\units\\*.txt").c_str(), &unitFileData)) == -1L)
 		{
 			LOG(LogLevel::Info) << "Could not open units directory.";
 			return -1;
 		}
 		do
 		{
-			if (strcmp(unitFileData.name, ".") == 0 || strcmp(unitFileData.name, "..") == 0 )
+			if (strcmp(unitFileData.name, ".") == 0 || strcmp(unitFileData.name, "..") == 0)
 			{
 				continue;
 			}
 			string unitFilename = unitFileData.name;
 			string unitName = unitFilename.substr(0, unitFilename.find_first_of('.'));
 			AddUnitFileToRegimentTypeMap((EU3Loc + "\\common\\units"), unitName, rtm);
-		} while(_findnext(fileListing, &unitFileData) == 0);
+		} while (_findnext(fileListing, &unitFileData) == 0);
 		_findclose(fileListing);
 	}
 	read.close();
@@ -251,9 +252,9 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 	// Parse V2 input file
 	LOG(LogLevel::Info) << "Parsing Vicky2 data";
 	vector<pair<string, string>> minorityPops;
-	minorityPops.push_back(make_pair("ashkenazi","jewish"));
-	minorityPops.push_back(make_pair("sephardic","jewish"));
-	minorityPops.push_back(make_pair("","jewish"));
+	minorityPops.push_back(make_pair("ashkenazi", "jewish"));
+	minorityPops.push_back(make_pair("sephardic", "jewish"));
+	minorityPops.push_back(make_pair("", "jewish"));
 	V2World destWorld(minorityPops);
 
 
@@ -322,7 +323,7 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 	{
 		LOG(LogLevel::Warning) << "No continent mappings found - may lead to problems later";
 	}
-	
+
 	// Generate region mapping
 	LOG(LogLevel::Info) << "Parsing region structure";
 	if (_stat(".\\blankMod\\output\\map\\region.txt", &st) == 0)
@@ -477,7 +478,7 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 
 	//Parse government mapping
 	LOG(LogLevel::Info) << "Parsing governments mappings";
-	initParser();
+
 	obj = doParseFile("governmentMapping.txt");
 	if (obj == NULL)
 	{
@@ -490,7 +491,7 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 
 	//Parse tech schools
 	LOG(LogLevel::Info) << "Parsing tech schools.";
-	initParser();
+
 	obj = doParseFile("blocked_tech_schools.txt");
 	if (obj == NULL)
 	{
@@ -499,8 +500,8 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 	}
 	vector<string> blockedTechSchools;
 	blockedTechSchools = initBlockedTechSchools(obj);
-	initParser();
-	obj = doParseFile( (V2Loc + "\\common\\technology.txt").c_str() );
+
+	obj = doParseFile((V2Loc + "\\common\\technology.txt").c_str());
 	if (obj == NULL)
 	{
 		LOG(LogLevel::Error) << "Could not parse file " << V2Loc << "\\common\\technology.txt";
@@ -617,7 +618,7 @@ int ConvertEU3ToV2(const std::string& EU3SaveFileName)
 }
 
 
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
 	try
 	{

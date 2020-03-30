@@ -300,7 +300,7 @@ void V2Country::outputTech(FILE* output) const
 
 void V2Country::outputElection(FILE* output) const
 {
-	date electionDate = date("1836.1.1");
+	date electionDate = date("1836.1.1", false);
 
 	if (electionDate.month == 12)
 	{
@@ -613,7 +613,7 @@ void V2Country::initFromEU3Country(const EU3Country* _srcCountry, vector<string>
 	}
 	for (vector<V2Party*>::iterator i = parties.begin(); i != parties.end(); i++)
 	{
-		if ((*i)->isActiveOn(date("1836.1.1")) && ((*i)->ideology == idealogy))
+		if ((*i)->isActiveOn(date("1836.1.1", false)) && ((*i)->ideology == idealogy))
 		{
 			rulingParty = (*i)->name;
 			break;
@@ -623,7 +623,7 @@ void V2Country::initFromEU3Country(const EU3Country* _srcCountry, vector<string>
 	{
 		for (vector<V2Party*>::iterator i = parties.begin(); i != parties.end(); i++)
 		{
-			if ((*i)->isActiveOn(date("1836.1.1")))
+			if ((*i)->isActiveOn(date("1836.1.1", false)))
 			{
 				rulingParty = (*i)->name;
 				break;
@@ -984,12 +984,12 @@ void V2Country::convertArmies(const map<int,int>& leaderIDMap, double cost_per_r
 				continue;
 
 			// if we have ships, we must be a navy
-			bool isNavy = (rc >= big_ship); 
+			bool isNavy = (rc >= big_ship);
 			army->setNavy(isNavy);
 
-			double	regimentCount		= typeStrength / cost_per_regiment[rc];
-			int		regimentsToCreate	= (int)floor(regimentCount);
-			double	regimentRemainder	= regimentCount - regimentsToCreate;
+			double	regimentCount = typeStrength / cost_per_regiment[rc];
+			int		regimentsToCreate = (int)floor(regimentCount);
+			double	regimentRemainder = regimentCount - regimentsToCreate;
 			countryRemainder[rc] += regimentRemainder;
 			army->setArmyRemainders((RegimentCategory)rc, army->getArmyRemainder((RegimentCategory)rc) + regimentRemainder);
 
@@ -1052,17 +1052,24 @@ void V2Country::convertArmies(const map<int,int>& leaderIDMap, double cost_per_r
 				}
 			}
 		}
+		bool pass = false;
 		int selectedLocation = locationCandidates[int(locationCandidates.size() * ((double)rand() / RAND_MAX))];
 		if (army->getNavy() && usePort)
 		{
 			vector<int>::iterator white = std::find(port_whitelist.begin(), port_whitelist.end(), selectedLocation);
 			if (white == port_whitelist.end())
 			{
+				pass = true;
 				LOG(LogLevel::Warning) << "Assigning navy to non-whitelisted port province " << selectedLocation << " - if the save crashes, try blacklisting this province";
 			}
 		}
-		army->setLocation(selectedLocation);
-		armies.push_back(army);
+		if (!pass) {
+			army->setLocation(selectedLocation);
+			armies.push_back(army);
+		}
+		else {
+			LOG(LogLevel::Info) << "NAVY passed";
+		}
 	}
 
 	// allocate the remainders from the whole country to the armies according to their need, rounding up

@@ -352,7 +352,7 @@ V2World::V2World(vector<pair<string, string>> minorities)
 	LOG(LogLevel::Info) << "Getting potential countries";
 	potentialCountries.clear();
 	dynamicCountries.clear();
-	const date FirstStartDate = date("1836.1.1");
+	const date FirstStartDate = date("1836.1.1", false);
 	ifstream V2CountriesInput;
 	if (_stat(".\\blankMod\\output\\common\\countries.txt", &st) == 0)
 	{

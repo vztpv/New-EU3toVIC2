@@ -51,7 +51,7 @@ EU3Relations::EU3Relations(Object* obj) {
 	vector<Object*> lastSendObj = obj->getValue("last_send_diplomat");
 	if (lastSendObj.size() > 0)
 	{
-		last_send_diplomat = date(lastSendObj[0]);
+		last_send_diplomat = date(lastSendObj[0], true);
 	}
 	else
 	{
@@ -61,7 +61,7 @@ EU3Relations::EU3Relations(Object* obj) {
 	vector<Object*> lastWarObj =  obj->getValue("last_war");
 	if (lastWarObj.size() > 0)
 	{
-		last_war = date(lastWarObj[0]);
+		last_war = date(lastWarObj[0], true);
 	}
 	else
 	{
