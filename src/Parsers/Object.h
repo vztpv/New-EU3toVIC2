@@ -69,7 +69,7 @@ public:
 	virtual void keyCount(map<string, int>& counter)=0;
 	virtual string getToken(int index)=0;
 	virtual vector<string> getTokens() = 0;
-	virtual int numTokens() = 0;
+	virtual int numTokens() = 0; // maybe not used?
 	virtual bool isLeaf() const = 0;
 	virtual double safeGetFloat(string k, double def = 0) = 0;
 	virtual string safeGetString(string k, string def = "") = 0;
