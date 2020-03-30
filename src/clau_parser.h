@@ -1075,7 +1075,12 @@ namespace wiz {
 
 			return temp;
 		}
-		virtual int numTokens() { return 0; }
+		virtual int numTokens() {
+			if (!this->isObjectList) {
+				return 0;
+			}
+			return objectList.size();
+		}
 		virtual bool isLeaf() const { return false; }
 		virtual double safeGetFloat(string k, double def = 0) {
 			objvec vec = getValue(k);	// the objects with the keys to be returned
