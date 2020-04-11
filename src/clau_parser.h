@@ -111,6 +111,81 @@ namespace wiz {
 	class InFileReserver
 	{
 	private:
+		class BomInfo
+		{
+		public:
+			size_t bom_size;
+			char seq[5];
+		};
+
+		const static size_t BOM_COUNT = 1;
+
+		enum class BomType { UTF_8, ANSI };
+
+		const static BomInfo bomInfo[1];
+
+		static BomType ReadBom(std::ifstream& file) {
+			char btBom[5] = { 0, };
+			file.read(btBom, 5);
+			size_t readSize = file.gcount();
+
+			if (0 == readSize) {
+				file.clear();
+				file.seekg(0, std::ios_base::beg);
+				return BomType::ANSI;
+			}
+
+			BomInfo stBom = { 0, };
+			BomType type = ReadBom(btBom, readSize, stBom);
+
+			if (type == BomType::ANSI) { // ansi
+				file.clear();
+				file.seekg(0, std::ios_base::beg);
+				return BomType::ANSI;
+			}
+
+			file.clear();
+			file.seekg(stBom.bom_size, std::ios_base::beg);
+			return type;
+		}
+
+		static BomType ReadBom(const char* contents, size_t length, BomInfo& outInfo) {
+			char btBom[5] = { 0, };
+			size_t testLength = length < 5 ? length : 5;
+			memcpy(btBom, contents, testLength);
+
+			size_t i, j;
+			for (i = 0; i < BOM_COUNT; ++i) {
+				const BomInfo& bom = bomInfo[i];
+
+				if (bom.bom_size > testLength) {
+					continue;
+				}
+
+				bool matched = true;
+
+				for (j = 0; j < bom.bom_size; ++j) {
+					if (bom.seq[j] == btBom[j]) {
+						continue;
+					}
+
+					matched = false;
+					break;
+				}
+
+				if (!matched) {
+					continue;
+				}
+
+				outInfo = bom;
+
+				return (BomType)i;
+			}
+
+			return BomType::ANSI;
+		}
+
+
 		// todo - rename.
 		static long long Get(long long position, long long length, char ch, const wiz::LoadDataOption& option) {
 			long long x = (position << 32) + (length << 3) + 0;
@@ -576,6 +651,12 @@ namespace wiz {
 				unsigned long long length = inFile.tellg();
 				inFile.seekg(0, inFile.beg);
 
+				BomType x = ReadBom(inFile);
+				//	wiz::Out << "length " << length << "\n";
+				if (x == BomType::UTF_8) {
+					length = length - 3;
+				}
+
 				file_length = length;
 				buffer = new char[file_length + 1]; // 
 
@@ -626,6 +707,7 @@ namespace wiz {
 			return x;
 		}
 	};
+
 
 	class Type : public Object {
 	private:
