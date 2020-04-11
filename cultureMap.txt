@@ -83,7 +83,7 @@ link = { vic = north_andean eu3 = n_andean }
 link = { vic = brazilian eu3 = brazilian }
 
 # French - cosmopolitan_french, gascon, normand, aquitaine, burgundian, occitain, wallonian
-link = { vic = french_canadian eu3 = eu3 = cosmopolitan_french eu3 = gascon eu3 = normand eu3 = aquitaine eu3 = burgundian eu3 = occitain eu3 = breton region = northern_america }
+link = { vic = french_canadian eu3 = cosmopolitan_french eu3 = gascon eu3 = normand eu3 = aquitaine eu3 = burgundian eu3 = occitain eu3 = breton region = northern_america }
 link = { vic = cosmopolitan_french eu3 = cosmopolitan_french eu3 = gascon eu3 = normand eu3 = aquitaine eu3 = burgundian eu3 = occitain }
 link = { vic = wallonian eu3 = wallonian }
 link = { eu3 = frankish vic = frankish }
