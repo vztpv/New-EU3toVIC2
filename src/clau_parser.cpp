@@ -1,10 +1,6 @@
 
 #include "clau_parser.h"
 
-const wiz::InFileReserver::BomInfo wiz::InFileReserver::bomInfo[1] = {
-	{ 3, { (char)0xEF, (char)0xBB, (char)0xBF } }
-};
-
 ostream& operator<< (ostream& os, const Object& obj)
 {
 	const wiz::UserType& ut = ((const wiz::UserType&)obj);

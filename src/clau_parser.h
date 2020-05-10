@@ -122,16 +122,19 @@ namespace wiz {
 
 		enum class BomType { UTF_8, ANSI };
 
-		const static BomInfo bomInfo[1];
+		inline static const BomInfo bomInfo[1] = {
+			{ 3, { (char)0xEF, (char)0xBB, (char)0xBF } }
+		};
 
-		static BomType ReadBom(std::ifstream& file) {
+		static BomType ReadBom(FILE* file) {
 			char btBom[5] = { 0, };
-			file.read(btBom, 5);
-			size_t readSize = file.gcount();
+			size_t readSize = fread(btBom, sizeof(char), 5, file);
+
 
 			if (0 == readSize) {
-				file.clear();
-				file.seekg(0, std::ios_base::beg);
+				clearerr(file);
+				fseek(file, 0, SEEK_SET);
+
 				return BomType::ANSI;
 			}
 
@@ -139,13 +142,13 @@ namespace wiz {
 			BomType type = ReadBom(btBom, readSize, stBom);
 
 			if (type == BomType::ANSI) { // ansi
-				file.clear();
-				file.seekg(0, std::ios_base::beg);
+				clearerr(file);
+				fseek(file, 0, SEEK_SET);
 				return BomType::ANSI;
 			}
 
-			file.clear();
-			file.seekg(stBom.bom_size, std::ios_base::beg);
+			clearerr(file);
+			fseek(file, stBom.bom_size * sizeof(char), SEEK_SET);
 			return type;
 		}
 
@@ -186,6 +189,7 @@ namespace wiz {
 		}
 
 
+
 		// todo - rename.
 		static long long Get(long long position, long long length, char ch, const wiz::LoadDataOption& option) {
 			long long x = (position << 32) + (length << 3) + 0;
@@ -220,9 +224,12 @@ namespace wiz {
 			return (x & 1);
 		}
 
+		static void PrintToken(const char* buffer, long long token) {
+			std::cout << std::string(buffer + GetIdx(token), GetLength(token));
+		}
+
 		static void _Scanning(char* text, long long num, const long long length,
 			long long*& token_arr, long long& _token_arr_size, const LoadDataOption& option) {
-
 
 			long long token_arr_size = 0;
 
@@ -234,11 +241,12 @@ namespace wiz {
 
 				long long token_arr_count = 0;
 
-				for (long long i = 0; i < length; ++i) {
+				for (long long i = 0; i < length; i = i + 1) {
+
 					const char ch = text[i];
 
-					if ('\"' == ch) {
-
+					switch (ch) {
+					case '\"':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -256,16 +264,15 @@ namespace wiz {
 							token_arr[num + token_arr_count] += Get(i + num, 1, ch, option);
 							token_arr_count++;
 						}
-
+						break;
+					case '\\':
+					{//
+						token_arr[num + token_arr_count] = 1;
+						token_arr[num + token_arr_count] += Get(i + num, 1, ch, option);
+						token_arr_count++;
 					}
-					else if ('\\' == ch) {
-						{//
-							token_arr[num + token_arr_count] = 1;
-							token_arr[num + token_arr_count] += Get(i + num, 1, ch, option);
-							token_arr_count++;
-						}
-					}
-					else if ('\n' == ch) {
+					break;
+					case '\n':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -279,8 +286,8 @@ namespace wiz {
 							token_arr[num + token_arr_count] += Get(i + num, 1, ch, option);
 							token_arr_count++;
 						}
-					}
-					else if ('\0' == ch) {
+						break;
+					case '\0':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -294,8 +301,8 @@ namespace wiz {
 							token_arr[num + token_arr_count] += Get(i + num, 1, ch, option);
 							token_arr_count++;
 						}
-					}
-					else if (option.LineComment == ch) {
+						break;
+					case '#':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -310,8 +317,12 @@ namespace wiz {
 							token_arr_count++;
 						}
 
-					}
-					else if (isWhitespace(ch)) {
+						break;
+					case ' ':
+					case '\t':
+					case '\r':
+					case '\v':
+					case '\f':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -319,8 +330,9 @@ namespace wiz {
 						}
 						token_first = i + 1;
 						token_last = i + 1;
-					}
-					else if (option.Left == ch) {
+
+						break;
+					case '{':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -335,8 +347,8 @@ namespace wiz {
 
 						token_first = i + 1;
 						token_last = i + 1;
-					}
-					else if (option.Right == ch) {
+						break;
+					case '}':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -350,9 +362,8 @@ namespace wiz {
 
 						token_first = i + 1;
 						token_last = i + 1;
-
-					}
-					else if (option.Assignment == ch) {
+						break;
+					case '=':
 						token_last = i - 1;
 						if (token_last - token_first + 1 > 0) {
 							token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -366,7 +377,9 @@ namespace wiz {
 
 						token_first = i + 1;
 						token_last = i + 1;
+						break;
 					}
+
 				}
 
 				if (length - 1 - token_first + 1 > 0) {
@@ -380,6 +393,8 @@ namespace wiz {
 				_token_arr_size = token_arr_size;
 			}
 		}
+
+
 
 		static void ScanningNew(char* text, const long long length, const int thr_num,
 			long long*& _token_arr, long long& _token_arr_size, const LoadDataOption& option)
@@ -429,70 +444,64 @@ namespace wiz {
 				thr[i].join();
 			}
 
-			{
-				long long _count = 0;
-				for (int i = 0; i < thr_num; ++i) {
-					for (long long j = 0; j < token_arr_size[i]; ++j) {
-						tokens[token_count] = tokens[start[i] + j];
-						token_count++;
-					}
-				}
-			}
-
 			int state = 0;
 			long long qouted_start;
 			long long slush_start;
 
-			for (long long i = 0; i < token_count; ++i) {
-				const long long len = GetLength(tokens[i]);
-				const char ch = text[GetIdx(tokens[i])];
-				const long long idx = GetIdx(tokens[i]);
-				const bool isToken2 = IsToken2(tokens[i]);
+			for (long long t = 0; t < thr_num; ++t) {
+				for (long long j = 0; j < token_arr_size[t]; ++j) {
+					const long long i = start[t] + j;
 
-				if (isToken2) {
-					if (0 == state && '\"' == ch) {
-						state = 1;
-						qouted_start = i;
-					}
-					else if (0 == state && option.LineComment == ch) {
-						state = 2;
-					}
-					else if (1 == state && '\\' == ch) {
-						state = 3;
-						slush_start = idx;
-					}
-					else if (1 == state && '\"' == ch) {
-						state = 0;
+					const long long len = GetLength(tokens[i]);
+					const char ch = text[GetIdx(tokens[i])];
+					const long long idx = GetIdx(tokens[i]);
+					const bool isToken2 = IsToken2(tokens[i]);
 
-						{
-							long long idx = GetIdx(tokens[qouted_start]);
-							long long len = GetLength(tokens[qouted_start]);
-							long long type = GetType(tokens[qouted_start]);
+					if (isToken2) {
+						if (0 == state && '\"' == ch) {
+							state = 1;
+							qouted_start = i;
+						}
+						else if (0 == state && option.LineComment == ch) {
+							state = 2;
+						}
+						else if (1 == state && '\\' == ch) {
+							state = 3;
+							slush_start = idx;
+						}
+						else if (1 == state && '\"' == ch) {
+							state = 0;
 
-							len = GetIdx(tokens[i]) - idx + 1;
+							{
+								long long idx = GetIdx(tokens[qouted_start]);
+								long long len = GetLength(tokens[qouted_start]);
 
-							len -= 2;
-							idx += 1;
+								len = GetIdx(tokens[i]) - idx + 1;
 
-							if (len >= 0) {
-								tokens[real_token_arr_count] = Get(idx, len, type, option);
+								tokens[real_token_arr_count] = Get(idx + 1, len - 2, text[idx], option);
 								real_token_arr_count++;
+
+							//	PrintToken(text, tokens[real_token_arr_count - 1]);
+							//	std::cout << "\n";
 							}
 						}
-					}
-					else if (3 == state) {
-						if (idx != slush_start + 1) {
-							--i;
+						else if (3 == state) {
+							if (idx != slush_start + 1) {
+								--j; // --i;
+							}
+							state = 1;
 						}
-						state = 1;
+						else if (2 == state && ('\n' == ch || '\0' == ch)) {
+							state = 0;
+						}
 					}
-					else if (2 == state && ('\n' == ch || '\0' == ch)) {
-						state = 0;
+					else if (0 == state) { // 
+						tokens[real_token_arr_count] = tokens[i];
+						real_token_arr_count++;
+
+						//PrintToken(text, tokens[real_token_arr_count - 1]);
+						//std::cout << "\n";
 					}
-				}
-				else if (0 == state && !('\n' == ch || '\0' == ch)) { // '\\' case?
-					tokens[real_token_arr_count] = tokens[i];
-					real_token_arr_count++;
 				}
 			}
 
@@ -632,10 +641,10 @@ namespace wiz {
 		}
 
 
-		static std::pair<bool, int> Scan(std::ifstream& inFile, const int num, const wiz::LoadDataOption& option, int thr_num,
+		static std::pair<bool, int> Scan(FILE* inFile, const int num, const wiz::LoadDataOption& option, int thr_num,
 			char*& _buffer, long long* _buffer_len, long long*& _token_arr, long long* _token_arr_len)
 		{
-			if (inFile.eof()) {
+			if (inFile == nullptr) {
 				return { false, 0 };
 			}
 
@@ -647,11 +656,12 @@ namespace wiz {
 			long long file_length;
 
 			{
-				inFile.seekg(0, inFile.end);
-				unsigned long long length = inFile.tellg();
-				inFile.seekg(0, inFile.beg);
+				fseek(inFile, 0, SEEK_END);
+				unsigned long long length = ftell(inFile);
+				fseek(inFile, 0, SEEK_SET);
 
 				BomType x = ReadBom(inFile);
+
 				//	wiz::Out << "length " << length << "\n";
 				if (x == BomType::UTF_8) {
 					length = length - 3;
@@ -660,8 +670,11 @@ namespace wiz {
 				file_length = length;
 				buffer = new char[file_length + 1]; // 
 
+				//int a = clock();
 				// read data as a block:
-				inFile.read(buffer, file_length);
+				fread(buffer, sizeof(char), file_length, inFile);
+				//int b = clock();
+				//std::cout << b - a << " " << file_length <<"\n";
 
 				buffer[file_length] = '\0';
 
@@ -690,20 +703,22 @@ namespace wiz {
 		}
 
 	private:
-		std::ifstream* pInFile;
+		FILE* pInFile;
 	public:
 		int Num;
 	public:
-		explicit InFileReserver(std::ifstream& inFile)
+		explicit InFileReserver(FILE* inFile)
 		{
-			pInFile = &inFile;
+			pInFile = inFile;
 			Num = 1;
 		}
-		bool end()const { return pInFile->eof(); } //
+		//bool end()const { return pInFile->eof(); } //
 	public:
 		bool operator() (const wiz::LoadDataOption& option, int thr_num, char*& buffer, long long* buffer_len, long long*& token_arr, long long* token_arr_len)
 		{
-			bool x = Scan(*pInFile, Num, option, thr_num, buffer, buffer_len, token_arr, token_arr_len).second > 0;
+			bool x = Scan(pInFile, Num, option, thr_num, buffer, buffer_len, token_arr, token_arr_len).second > 0;
+
+			//	std::cout << *token_arr_len << "\n";
 			return x;
 		}
 	};
@@ -1840,13 +1855,13 @@ namespace wiz {
 			}
 
 			bool success = true;
-			std::ifstream inFile;
-			inFile.open(fileName, std::ios::binary);
+			FILE* inFile;
+			fopen_s(&inFile, fileName.c_str(), "rb");
 
 
-			if (true == inFile.fail())
+			if (nullptr == inFile)
 			{
-				inFile.close(); return false;
+				return false;
 			}
 
 			UserType globalTemp;
@@ -1867,16 +1882,16 @@ namespace wiz {
 				// cf) empty file..
 				if (false == _LoadData(ifReserver, globalTemp, option, lex_thr_num, parse_thr_num))
 				{
-					inFile.close();
+					fclose(inFile);
 					return false; // return true?
 				}
 
-				inFile.close();
+				fclose(inFile);
 			}
-			catch (const char* err) { std::cout << err << "\n"; inFile.close(); return false; }
-			catch (const std::string& e) { std::cout << e << "\n"; inFile.close(); return false; }
-			catch (const std::exception& e) { std::cout << e.what() << "\n"; inFile.close(); return false; }
-			catch (...) { std::cout << "not expected error" << "\n"; inFile.close(); return false; }
+			catch (const char* err) { std::cout << err << "\n"; fclose(inFile); return false; }
+			catch (const std::string& e) { std::cout << e << "\n"; fclose(inFile); return false; }
+			catch (const std::exception& e) { std::cout << e.what() << "\n"; fclose(inFile); return false; }
+			catch (...) { std::cout << "not expected error" << "\n"; fclose(inFile); return false; }
 
 
 			global = std::move(globalTemp);
